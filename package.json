@@ -1,0 +1,16 @@
+{
+  "name": "simple-deribit-realtime",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "simple-web-socket-client-reconnect": "EmptyLife/simple-web-socket-client-reconnect",
+	"simple-realtime-helper-heartbeat": "EmptyLife/simple-realtime-helper-heartbeat"
+  },
+  "author": "EmptyLife",
+  "license": "ISC"
+}
