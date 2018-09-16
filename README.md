@@ -1,5 +1,8 @@
 # simple-deribit-realtime
 
+### Install
+```npm i EmptyLife/simple-deribit-realtime```
+
 ### Example
 ```js
 const socket = new SimpleDeribitRealtime({ 
