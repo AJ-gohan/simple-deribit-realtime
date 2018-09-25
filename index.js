@@ -1,4 +1,4 @@
-﻿
+
 const net = require("net")
 const crypto = require("crypto")
 const EventEmitter = require("events")
@@ -223,8 +223,7 @@ class SimpleDeribitRealtime extends EventEmitter {
 		
 		this.apiVersion = "v1";
 		
-		this.subscribes = [];
-		this.unsubscribes = [];
+		this._subscribe = {event: [], instrument: []};
 		this.mdr = new MakeDeribitRequest(this.options);
 		this.rpc = null;
 	
@@ -263,10 +262,9 @@ class SimpleDeribitRealtime extends EventEmitter {
 				}
 			});
 			this.emit("open");
-
-			this._mapToEventsInstruments(this.subscribes).forEach(obj =>
-				this.callPrivate("subscribe", obj).catch(e => 0)
-			);
+			
+			//console.log((this._subscribe));
+			this.callPrivate("subscribe", this._subscribe).catch(e => 0)
 			
 			this.callPublic("setheartbeat", {interval: 10});
 		});
@@ -289,54 +287,19 @@ class SimpleDeribitRealtime extends EventEmitter {
 		//console.log(message)
 		this.rpc.recvMessage(message);
 	}
-	
-	_eventsIntrumentsToMap(events, instruments) {
-		events = Array.isArray(events) ? events : [events];
-		instruments = Array.isArray(instruments) ? instruments : [instruments];
-		
-		const instrumentsObj = {};
-		instruments.forEach(v => instrumentsObj[v] = true);
 
-		const eventsObj = {};
-		events.forEach(v => eventsObj[v] = {...instrumentsObj});
+	subscribe(event, instrument) {
+		this._subscribe = {event, instrument};
 		
-		return eventsObj;
-	}
-	_mapToEventsInstruments(map) {
-		const array = [];
-		for(const e in map) {
-			array.push({event: [e], instrument: Reflect.ownKeys(map[e])});
-		}
-		
-		return array;
-	}
-	
-	subscribe(events, instruments) {
-		const localSubscribes = this._eventsIntrumentsToMap(events, instruments);
-		
-		for(const event in localSubscribes) {
-			this.subscribes[event] = {
-				...this.subscribes[event],
-				...localSubscribes[event]
-			};
+		if ( this.rpc ) {
+			this.callPrivate("subscribe", this._subscribe).catch(e => 0)
 		}
 	}
 	unsubscribe(events, instruments) {
-		const localSubscribes = this._eventsIntrumentsToMap(events, instruments);
-		for(const event in localSubscribes) {
-			for(const instrument in localSubscribes[event]) {
-				delete this.subscribes[event][instrument];
-			}
-			if ( !Reflect.ownKeys(this.subscribes[event]).length ) {
-				delete this.subscribes[event];
-			}
-		}
-		
 		if ( this.rpc ) {
-			this._mapToEventsInstruments(localSubscribes).forEach(obj =>
-				this.callPrivate("unsubscribe", obj).catch(e => 0)
-			);
+			this.callPrivate("unsubscribe", this._subscribe).catch(e => 0)
 		}
+		this._subscribe = {event: [], instrument: []};
 	}
 
 	async callPublic(action, options, timeout) {
